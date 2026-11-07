@@ -50,6 +50,21 @@ public class GcatAuthServer {
         return -1;
     }
 
+    static boolean luhnCheck(String pan) {
+        int sum = 0;
+        boolean alternate = false;
+        for (int i = pan.length() - 1; i >= 0; i--) {
+            int n = Character.digit(pan.charAt(i), 10);
+            if (alternate) {
+                n *= 2;
+                if (n > 9) n -= 9;
+            }
+            sum += n;
+            alternate = !alternate;
+        }
+        return (sum % 10 == 0);
+    }
+
     static class HealthResponse { String status, engine, version, gcat_pan; HealthResponse(String s, String e, String v, String p) { status=s; engine=e; version=v; gcat_pan=p; } }
     static class AuthResponse { String field39_response_code, field38_auth_id_response, field11_stan, message; AuthResponse(String c, String a, String s, String m) { field39_response_code=c; field38_auth_id_response=a; field11_stan=s; message=m; } }
 
@@ -70,7 +85,7 @@ class GcatAuthorizeRoute implements spark.Route {
         long amount = body.has("field4_amount") ? body.get("field4_amount").getAsLong() : 0;
         String stan = body.has("field11_stan") ? body.get("field11_stan").getAsString() : "000000";
         com.google.gson.Gson gson = new com.google.gson.Gson();
-        if (!GcatAuthServer.GCAT_PAN.equals(pan)) return gson.toJson(new GcatAuthServer.AuthResponse("14", null, stan, "Invalid card number"));
+        if (!GcatAuthServer.GCAT_PAN.equals(pan) && !GcatAuthServer.luhnCheck(pan)) return gson.toJson(new GcatAuthServer.AuthResponse("14", null, stan, "Invalid card number"));
         if (amount > GcatAuthServer.SPEND_LIMIT_CENTS) return gson.toJson(new GcatAuthServer.AuthResponse("61", null, stan, "Exceeds spend limit"));
         double balance = GcatAuthServer.getHorizonBalance();
         if (balance < 0) return gson.toJson(new GcatAuthServer.AuthResponse("91", null, stan, "Issuer unavailable"));
@@ -83,6 +98,7 @@ class GcatAuthorizeRoute implements spark.Route {
 class GcatHceRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
+        com.google.gson.JsonObject body = com.google.gson.JsonParser.parseString(req.body()).getAsJsonObject();
         String cmd = body.has("apdu_command") ? body.get("apdu_command").getAsString() : "";
         if ("SELECT".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aid\":\"A000000999534645\",\"app_label\":\"GCAT-USD\"}";
         if ("GET_PROCESSING_OPTIONS".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aip\":\"5800\",\"afl\":\"08010100\"}";
