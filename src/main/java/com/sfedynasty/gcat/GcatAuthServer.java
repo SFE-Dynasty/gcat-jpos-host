@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class GcatAuthServer {
 
-    static final String GCAT_PAN = System.getenv().getOrDefault("GCAT_PAN", "4815200000250000");
+    static final String GCAT_PAN = System.getenv().getOrDefault("GCAT_PAN", "9000002500000001");
     static final long SPEND_LIMIT_CENTS = Long.parseLong(System.getenv().getOrDefault("SPEND_LIMIT_CENTS", "5000000"));
     private static final String GCAT_ACCOUNT = System.getenv().getOrDefault("GCAT_ACCOUNT", "GCATMWLZ7EU7EUWJ3LS6SBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW");
     private static final String USD_ISSUER = System.getenv().getOrDefault("USD_ISSUER", "GCVDS3YYXQVFVVG4HSIBZAHQJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3");
@@ -86,7 +86,7 @@ class GcatHceRoute implements spark.Route {
         String cmd = body.has("apdu_command") ? body.get("apdu_command").getAsString() : "";
         if ("SELECT".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aid\":\"A000000999534645\",\"app_label\":\"GCAT-USD\"}";
         if ("GET_PROCESSING_OPTIONS".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aip\":\"5800\",\"afl\":\"08010100\"}";
-        if ("READ_RECORD".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"4815200000250000\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAWN-TERRELL\"}";
+        if ("READ_RECORD".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"9000002500000001\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAWN-TERRELL\"}";
         if ("GENERATE_AC".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"arqc\":\"" + String.format("%016X", System.currentTimeMillis()) + "\",\"ac_type\":\"ARQC\",\"atc\":\"0001\"}";
         return "{\"sw1sw2\":\"6F00\",\"error\":\"Unknown APDU command\"}";
     }
@@ -109,14 +109,14 @@ class GcatChipTxRoute implements spark.Route {
 class GcatMagRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        return "{\"track2\":\"4815200000250000=2812101000000000\",\"format\":\"track2\"}";
+        return "{\"track2\":\"9000002500000001=2812101000000000\",\"format\":\"track2\"}";
     }
 }
 
 class GcatQrGenRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        return "{\"qr_string\":\"00020101021226370014A00000099953464502164815200000250000520400005303840540510.005802US5918SF EMERALD DYNASTY6013WASHINGTON DC6304ABCD\"}";
+        return "{\"qr_string\":\"00020101021226370014A00000099953464502169000002500000001520400005303840540510.005802US5918SF EMERALD DYNASTY6013WASHINGTON DC6304ABCD\"}";
     }
 }
 
