@@ -33,6 +33,11 @@
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
         </dependency>
+        <dependency>
+            <groupId>network.stellar.sdk</groupId>
+            <artifactId>java-stellar-sdk</artifactId>
+            <version>0.44.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
