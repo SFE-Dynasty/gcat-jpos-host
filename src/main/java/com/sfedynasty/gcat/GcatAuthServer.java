@@ -28,6 +28,7 @@ public class GcatAuthServer {
         post("/qr/authorize", new GcatQrAuthRoute());
         post("/ble/advertise", new GcatBleAdvRoute());
         post("/ble/authorize", new GcatBleAuthRoute());
+        post("/stellar/build-xdr", new GcatStellarXdrRoute());
         System.out.println("GCAT jPOS Auth Host running on port " + port);
     }
 
@@ -82,7 +83,6 @@ class GcatAuthorizeRoute implements spark.Route {
 class GcatHceRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        com.google.gson.JsonObject body = com.google.gson.JsonParser.parseString(req.body()).getAsJsonObject();
         String cmd = body.has("apdu_command") ? body.get("apdu_command").getAsString() : "";
         if ("SELECT".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aid\":\"A000000999534645\",\"app_label\":\"GCAT-USD\"}";
         if ("GET_PROCESSING_OPTIONS".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aip\":\"5800\",\"afl\":\"08010100\"}";
@@ -102,7 +102,7 @@ class GcatChipApduRoute implements spark.Route {
 class GcatChipTxRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        return "{\"sw1sw2\":\"9000\",\"flow_complete\":true,\"steps_completed\":[\"SELECT\",\"GPO\",\"READ_RECORD\",\"GENERATE_AC\"],\"arqc\":\"" + String.format("%016X", System.currentTimeMillis()) + "\"}";
+        return "{\"sw1sw2\":\"9000\",\"flow_complete\":true,\"steps_completed\":[\"SEMECT\",\"GPO\",\"READ_RECORD\",\"GENERATE_AC\"],\"arqc\":\"" + String.format("%016X", System.currentTimeMillis()) + "\"}";
     }
 }
 
