@@ -3,21 +3,21 @@ services:
     name: gcat-jpos-host
     runtime: docker
     dockerBuildArgs:
-      CACHE_BUST: "20261108"
+      CACHE_BUST: "20261108b"
     envVars:
       - key: PORT
-        value: 8080
+        value: "8080"
       - key: GCAT_PAN
         value: "9000002500000001"
       - key: GCAT_AID
         value: "F000000999534645"
       - key: GCAT_SPEND_LIMIT
         value: "5000000"
-      - key: GCAT_BALANCE
-        value: "25000000000"
+      - key: GCAT_BALANCE_USD
+        value: "250000.00"
       - key: STELLAR_HORIZON
         value: "https://horizon.stellar.org"
       - key: GCAT_ISSUER
-        value: "GCVDS3YYXQVFVVG4HSIBZAHQJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3"
+        value: "GCVDS3YYXQVFVVG4HSIATHAOJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3"
       - key: GCAT_PUBLIC
-        value: "GCATMWLZ7EU7EUWH“LSSBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW"
+        value: "GCATMWLZ7EU7EUWJ3LS6SBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW"
