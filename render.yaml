@@ -3,7 +3,7 @@ services:
     name: gcat-jpos-host
     runtime: docker
     dockerBuildArgs:
-      CACHE_BUST: "20261108b"
+      CACHE_BUST: "20261108c"
     envVars:
       - key: PORT
         value: "8080"
