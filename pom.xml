@@ -14,11 +14,6 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>org.jpos</groupId>
-            <artifactId>jpos</artifactId>
-            <version>2.1.9</version>
-        </dependency>
-        <dependency>
             <groupId>com.sparkjava</groupId>
             <artifactId>spark-core</artifactId>
             <version>2.9.4</version>
@@ -32,11 +27,6 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
-        </dependency>
-        <dependency>
-            <groupId>network.lightsail</groupId>
-            <artifactId>stellar-sdk</artifactId>
-            <version>6.0.0</version>
         </dependency>
     </dependencies>
     <build>
