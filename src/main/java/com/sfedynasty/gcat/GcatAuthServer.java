@@ -8,6 +8,7 @@ import java.io.IOException;
 public class GcatAuthServer {
 
     static final String GCAT_PAN = System.getenv().getOrDefault("GCAT_PAN", "9000002500000001");
+    static final String AID = System.getenv().getOrDefault("AID", "F000000999534645");
     static final long SPEND_LIMIT_CENTS = Long.parseLong(System.getenv().getOrDefault("SPEND_LIMIT_CENTS", "5000000"));
     private static final String GCAT_ACCOUNT = System.getenv().getOrDefault("GCAT_ACCOUNT", "GCATMWLZ7EU7EUWJ3LS6SBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW");
     private static final String USD_ISSUER = System.getenv().getOrDefault("USD_ISSUER", "GCVDS3YYXQVFVVG4HSIBZAHQJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3");
@@ -50,11 +51,14 @@ public class GcatAuthServer {
         return -1;
     }
 
-    static boolean luhnCheck(String pan) {
+    private static boolean luhnCheck(String pan) {
+        if (pan == null || pan.length() < 13) return false;
         int sum = 0;
         boolean alternate = false;
         for (int i = pan.length() - 1; i >= 0; i--) {
-            int n = Character.digit(pan.charAt(i), 10);
+            char c = pan.charAt(i);
+            if (!Character.isDigit(c)) return false;
+            int n = Character.digit(c, 10);
             if (alternate) {
                 n *= 2;
                 if (n > 9) n -= 9;
@@ -65,7 +69,7 @@ public class GcatAuthServer {
         return (sum % 10 == 0);
     }
 
-    static class HealthResponse { String status, engine, version, gcat_pan; HealthResponse(String s, String e, String v, String p) { status=s; engine=e; version=v; gcat_pan=p; } }
+    static class HealthResponse { String status, engine, version, gcat_pan, aid; HealthResponse(String s, String e, String v, String p, String a) { status=s; engine=e; version=v; gcat_pan=p; aid=a; } }
     static class AuthResponse { String field39_response_code, field38_auth_id_response, field11_stan, message; AuthResponse(String c, String a, String s, String m) { field39_response_code=c; field38_auth_id_response=a; field11_stan=s; message=m; } }
 
 }
@@ -73,7 +77,7 @@ public class GcatAuthServer {
 class GcatHealthRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        return "{\"status\":\"healthy\",\"engine\":\"jPOS ISO 8583\",\"version\":\"2.1.9\",\"gcat_pan\":\"" + GcatAuthServer.GCAT_PAN + "\"}";
+        return "{\"status\":\"healthy\",\"engine\":\"jPOS ISO 8583\",\"version\":\"2.1.9\",\"gcat_pan\":\"" + GcatAuthServer.GCAT_PAN + "\",\"aid\":\"" + GcatAuthServer.AID + "\"}";
     }
 }
 
@@ -85,13 +89,35 @@ class GcatAuthorizeRoute implements spark.Route {
         long amount = body.has("field4_amount") ? body.get("field4_amount").getAsLong() : 0;
         String stan = body.has("field11_stan") ? body.get("field11_stan").getAsString() : "000000";
         com.google.gson.Gson gson = new com.google.gson.Gson();
-        if (!GcatAuthServer.GCAT_PAN.equals(pan) && !GcatAuthServer.luhnCheck(pan)) return gson.toJson(new GcatAuthServer.AuthResponse("14", null, stan, "Invalid card number"));
+        // Primary: exact match to treasury PAN — always accept without Luhn
+        // Secondary: accept any other PAN that passes Luhn
+        // Only reject with code 14 if BOTH checks fail
+        boolean panValid = GcatAuthServer.GCAT_PAN.equals(pan) || luhnCheck(pan);
+        if (!panValid) return gson.toJson(new GcatAuthServer.AuthResponse("14", null, stan, "Invalid card number"));
         if (amount > GcatAuthServer.SPEND_LIMIT_CENTS) return gson.toJson(new GcatAuthServer.AuthResponse("61", null, stan, "Exceeds spend limit"));
         double balance = GcatAuthServer.getHorizonBalance();
         if (balance < 0) return gson.toJson(new GcatAuthServer.AuthResponse("91", null, stan, "Issuer unavailable"));
         if (balance < amount / 100.0) return gson.toJson(new GcatAuthServer.AuthResponse("51", null, stan, "Insufficient funds"));
         String authId = String.format("%06d", (int)(Math.random() * 999999));
         return gson.toJson(new GcatAuthServer.AuthResponse("00", authId, stan, "Approved"));
+    }
+
+    private static boolean luhnCheck(String pan) {
+        if (pan == null || pan.length() < 13) return false;
+        int sum = 0;
+        boolean alternate = false;
+        for (int i = pan.length() - 1; i >= 0; i--) {
+            char c = pan.charAt(i);
+            if (!Character.isDigit(c)) return false;
+            int n = Character.digit(c, 10);
+            if (alternate) {
+                n *= 2;
+                if (n > 9) n -= 9;
+            }
+            sum += n;
+            alternate = !alternate;
+        }
+        return (sum % 10 == 0);
     }
 }
 
@@ -100,9 +126,9 @@ class GcatHceRoute implements spark.Route {
         res.type("application/json");
         com.google.gson.JsonObject body = com.google.gson.JsonParser.parseString(req.body()).getAsJsonObject();
         String cmd = body.has("apdu_command") ? body.get("apdu_command").getAsString() : "";
-        if ("SELECT".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aid\":\"A000000999534645\",\"app_label\":\"GCAT-USD\"}";
+        if ("SELECT".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aid\":\"" + GcatAuthServer.AID + "\",\"app_label\":\"GCAT-USD\"}";
         if ("GET_PROCESSING_OPTIONS".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"aip\":\"5800\",\"afl\":\"08010100\"}";
-        if ("READ_RECORD".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"9000002500000001\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAWN-TERRELL\"}";
+        if ("READ_RECORD".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"" + GcatAuthServer.GCAT_PAN + "\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAWN-TERRELL\"}";
         if ("GENERATE_AC".equals(cmd)) return "{\"sw1sw2\":\"9000\",\"arqc\":\"" + String.format("%016X", System.currentTimeMillis()) + "\",\"ac_type\":\"ARQC\",\"atc\":\"0001\"}";
         return "{\"sw1sw2\":\"6F00\",\"error\":\"Unknown APDU command\"}";
     }
@@ -111,7 +137,7 @@ class GcatHceRoute implements spark.Route {
 class GcatChipApduRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        return "{\"sw1sw2\":\"9000\",\"fci\":\"6F178408A000000999534645\",\"interface\":\"contact_chip\"}";
+        return "{\"sw1sw2\":\"9000\",\"fci\":\"6F178408" + GcatAuthServer.AID + "\",\"interface\":\"contact_chip\"}";
     }
 }
 
@@ -125,14 +151,14 @@ class GcatChipTxRoute implements spark.Route {
 class GcatMagRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        return "{\"track2\":\"9000002500000001=2812101000000000\",\"format\":\"track2\"}";
+        return "{\"track2\":\"" + GcatAuthServer.GCAT_PAN + "=2812101000000000\",\"format\":\"track2\"}";
     }
 }
 
 class GcatQrGenRoute implements spark.Route {
     public Object handle(spark.Request req, spark.Response res) throws Exception {
         res.type("application/json");
-        return "{\"qr_string\":\"00020101021226370014A00000099953464502169000002500000001520400005303840540510.005802US5918SF EMERALD DYNASTY6013WASHINGTON DC6304ABCD\"}";
+        return "{\"qr_string\":\"00020101021226370014" + GcatAuthServer.AID + "0216" + GcatAuthServer.GCAT_PAN + "520400005303840540510.005802US5918SF EMERALD DYNASTY6013WASHINGTON DC6304ABCD\"}";
     }
 }
 
@@ -156,5 +182,12 @@ class GcatBleAuthRoute implements spark.Route {
         res.type("application/json");
         String authId = String.format("%06d", (int)(Math.random() * 999999));
         return "{\"field39_response_code\":\"00\",\"field38_auth_id_response\":\"" + authId + "\",\"status\":\"approved\"}";
+    }
+}
+
+class GcatStellarXdrRoute implements spark.Route {
+    public Object handle(spark.Request req, spark.Response res) throws Exception {
+        res.type("application/json");
+        return "{\"status\":\"not_implemented\",\"message\":\"Stellar XDR build endpoint reserved\"}";
     }
 }
