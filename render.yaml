@@ -2,8 +2,9 @@ services:
   - type: web
     name: gcat-jpos-host
     runtime: docker
-    dockerBuildArgs:
-      CACHE_BUST: "20261108c"
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
     envVars:
       - key: PORT
         value: "8080"
@@ -18,6 +19,6 @@ services:
       - key: STELLAR_HORIZON
         value: "https://horizon.stellar.org"
       - key: GCAT_ISSUER
-        value: "GCVDS3YYXQVFVVG4HSIATHAOJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3"
+        value: "GCVDS3YYXQVFVVG4HSIBZAHQJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3"
       - key: GCAT_PUBLIC
-        value: "GCATMWLZ7EU7EUWJ3LS6SBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW"
+        value: "GCATMWLZ7EU7EUWJ3LS6SBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJY"
