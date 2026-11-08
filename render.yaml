@@ -2,23 +2,22 @@ services:
   - type: web
     name: gcat-jpos-host
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerBuildArgs:
+      CACHE_BUST: "20261108"
     envVars:
-      - key8êGCAT_PAN
-        value: 4815200000250000
-      - key8êGCAT_ACCOUNT
-        value: GCATMWLZ7EU7EUWJ3LS6SBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW
-      - key: USD_ISSUER
-        value: GCVDS3YYXQVFVVG4HSIBZAHQJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3
-      - key: HORIZON_URL
-        value: https://horizon.stellar.org
-      - key: SPEND_LIMIT_CENTS
-        value: "5000000"
-      - key: TRLQ_ENGINE_URL
-        value: https://fiduciary-clearing-engine.onrender.com
-      - key: UETR_PARENT
-        value: 762adade-c02f-441a-a12b-e940c1c022a6
-      - key: SETTLEMENT_TX
-        value: 6e938503bf9b1a2f8b43f5853b1e0982e09d27e26b06277e05bf906f9f66a087
       - key: PORT
-        value: "8080"
+        value: 8080
+      - key: GCAT_PAN
+        value: "9000002500000001"
+      - key: GCAT_AID
+        value: "F000000999534645"
+      - key: GCAT_SPEND_LIMIT
+        value: "5000000"
+      - key: GCAT_BALANCE
+        value: "25000000000"
+      - key: STELLAR_HORIZON
+        value: "https://horizon.stellar.org"
+      - key: GCAT_ISSUER
+        value: "GCVDS3YYXQVFVVG4HSIBZAHQJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3"
+      - key: GCAT_PUBLIC
+        value: "GCATMWLZ7EU7EUWHìLSSBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW"
