@@ -1,8 +1,7 @@
 FROM maven:3.9.6-eclipse-temurin-11 AS build
 WORKDIR /app
 COPY pom.xml .
-# Cache bust: forces full dependency re-download on each deploy
-ARG CACHE_BUST=1
+ARG CACHE_BUST=26261108b
 RUN echo "Cache bust: $CACHE_BUST" && mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests -B
