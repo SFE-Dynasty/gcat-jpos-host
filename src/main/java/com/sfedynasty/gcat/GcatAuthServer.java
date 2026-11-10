@@ -65,12 +65,12 @@ public class GcatAuthServer {
         try {
             JsonObject body = JsonParser.parseString(reqBody).getAsJsonObject();
             String cmd = body.has("apdu_command") ? body.get("apdu_command").getAsString() : "";
-            if ("SELECT_AID.equals(cmd) || "SELECT".equals(cmd))
+            if ("SELECT_AID".equals(cmd) || "SELECT".equals(cmd))
                 return "{\"sw1sw2\":\"9000\",\"aid\":\"" + AID + "\",\"app_label\":\"GCAT-USD\"}";
             if ("GET_PROCESSING_OPTIONS".equals(cmd))
                 return "{\"sw1sw2\":\"9000\",\"aip\":\"5800\",\"afl\":\"08010100\"}";
             if ("READ_RECORD".equals(cmd))
-                return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"" + GCAT_PAN + "\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAWN-TERRELL\"}";
+                return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"" + GCAT_PAN + "\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAON-TERRELL\"}";
             if ("GENERATE_AC".equals(cmd))
                 return "{\"sw1sw2\":\"9000\",\"arqc\":\"" + String.format("%016X", System.currentTimeMillis()) + "\",\"atc\":\"0001\"}";
             return "{\"sw1sw2\":\"6F00\",\"error\":\"unknown\"}";
