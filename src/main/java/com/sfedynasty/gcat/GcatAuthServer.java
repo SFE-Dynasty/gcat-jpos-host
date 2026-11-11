@@ -5,14 +5,15 @@ import com.google.gson.*;
 
 public class GcatAuthServer {
 
-    static final String GCAT_PAN        = System.getenv().getOrDefault("GCAT_PAN",          "9000002500000001");
-    static final String AID             = System.getenv().getOrDefault("GCAT_AID",          "F000000999534645");
+    static final String GCAT_PAN        = System.getenv().getOrDefault("GCAT_PAN",          "4815200000250000");
+    static final String AID             = System.getenv().getOrDefault("GCAT_AID",          "A000000999534645");
     static final long   SPEND_LIMIT     = Long.parseLong(System.getenv().getOrDefault("GCAT_SPEND_LIMIT", "5000000"));
     static final double BALANCE_USD     = Double.parseDouble(System.getenv().getOrDefault("GCAT_BALANCE_USD", "250000.00"));
 
     public static void main(String[] args) {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
         port(port);
+        
         get( "/health",           (q,r) -> { r.type("application/json"); return health(); });
         post("/authorize",        (q,r) -> { r.type("application/json"); return authorize(q.body()); });
         post("/hce/apdu",         (q,r) -> { r.type("application/json"); return hceApdu(q.body()); });
@@ -24,7 +25,8 @@ public class GcatAuthServer {
         post("/ble/advertise",    (q,r) -> { r.type("application/json"); return "{\"uuid\":\"a1b2c3d4-e5f6-4789-abcd-ef0123456789\",\"status\":\"advertising\"}"; });
         post("/ble/authorize",    (q,r) -> { r.type("application/json"); return "{\"field39_response_code\":\"00\",\"status\":\"approved\"}"; });
         post("/stellar/build-xdr",(q,r) -> { r.type("application/json"); return "{\"status\":\"reserved\"}"; });
-        System.out.println("GCAT jPOS v2.1.9 live on port " + port + " | PAN=" + GCAT_PAN + " | AIL=" + AID);
+        
+        System.out.println("GCAT jPOS v2.1.9 live on port " + port + " | PAN=" + GCAT_PAN + " | AID=" + AID);
     }
 
     static String health() {
@@ -48,7 +50,7 @@ public class GcatAuthServer {
             if (amt > SPEND_LIMIT)
                 return resp("61", null, stan, "Exceeds spend limit");
 
-            // Balance (static -- no Horizon call)
+            // Balance check
             if (amt / 100.0 > BALANCE_USD)
                 return resp("51", null, stan, "Insufficient funds");
 
@@ -65,14 +67,16 @@ public class GcatAuthServer {
         try {
             JsonObject body = JsonParser.parseString(reqBody).getAsJsonObject();
             String cmd = body.has("apdu_command") ? body.get("apdu_command").getAsString() : "";
+            
             if ("SELECT_AID".equals(cmd) || "SELECT".equals(cmd))
                 return "{\"sw1sw2\":\"9000\",\"aid\":\"" + AID + "\",\"app_label\":\"GCAT-USD\"}";
             if ("GET_PROCESSING_OPTIONS".equals(cmd))
                 return "{\"sw1sw2\":\"9000\",\"aip\":\"5800\",\"afl\":\"08010100\"}";
             if ("READ_RECORD".equals(cmd))
-                return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"" + GCAT_PAN + "\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAON-TERRELL\"}";
+                return "{\"sw1sw2\":\"9000\",\"tag_5A\":\"" + GCAT_PAN + "\",\"tag_5F24\":\"2812\",\"tag_5F20\":\"DENNIS/DASHAWN-TERRELL\"}";
             if ("GENERATE_AC".equals(cmd))
                 return "{\"sw1sw2\":\"9000\",\"arqc\":\"" + String.format("%016X", System.currentTimeMillis()) + "\",\"atc\":\"0001\"}";
+                
             return "{\"sw1sw2\":\"6F00\",\"error\":\"unknown\"}";
         } catch (Exception e) {
             return "{\"sw1sw2\":\"6F00\",\"error\":\"" + e.getMessage() + "\"}";
