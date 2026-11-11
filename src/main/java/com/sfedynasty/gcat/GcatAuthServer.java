@@ -2,13 +2,20 @@ package com.sfedynasty.gcat;
 
 import static spark.Spark.*;
 import com.google.gson.*;
+import okhttp3.*;
+import java.io.IOException;
 
 public class GcatAuthServer {
 
-    static final String GCAT_PAN        = System.getenv().getOrDefault("GCAT_PAN",          "4815200000250000");
-    static final String AID             = System.getenv().getOrDefault("GCAT_AID",          "A000000999534645");
+    // FIX 1 & 2: Updated PAN and AID to match the Android App and XML
+    static final String GCAT_PAN        = System.getenv().getOrDefault("GCAT_PAN",          "9000002500000001");
+    static final String AID             = System.getenv().getOrDefault("GCAT_AID",          "F000000999534645");
     static final long   SPEND_LIMIT     = Long.parseLong(System.getenv().getOrDefault("GCAT_SPEND_LIMIT", "5000000"));
     static final double BALANCE_USD     = Double.parseDouble(System.getenv().getOrDefault("GCAT_BALANCE_USD", "250000.00"));
+    
+    // The URL for your Python Clearing Engine
+    static final String CLEARING_ENGINE = "https://fiduciary-clearing-engine.onrender.com/stellar";
+    static final OkHttpClient http = new OkHttpClient();
 
     public static void main(String[] args) {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
@@ -56,11 +63,31 @@ public class GcatAuthServer {
 
             // Approved
             String authId = String.format("%06d", (int)(Math.random() * 999999));
+            
+            // FIX 3: Fire the settlement to the Python Clearing Engine
+            fireSettlement(amt, stan);
+
             return resp("00", authId, stan, "Approved");
 
         } catch (Exception e) {
             return resp("30", null, "000000", "Format error: " + e.getMessage());
         }
+    }
+
+    // This connects the Java host to the Python Engine!
+    static void fireSettlement(long amountCents, String stan) {
+        new Thread(() -> {
+            try {
+                String amountDollars = String.format("%.2f", amountCents / 100.0);
+                String jsonBody = "{\"amount\": \"" + amountDollars + "\", \"currency\": \"USD\"}";
+                RequestBody body = RequestBody.create(jsonBody, MediaType.parse("application/json"));
+                Request request = new Request.Builder().url(CLEARING_ENGINE).post(body).build();
+                http.newCall(request).execute().close();
+                System.out.println("Settlement fired to TRLQ for $" + amountDollars + " | STAN: " + stan);
+            } catch (IOException e) {
+                System.err.println("Settlement error: " + e.getMessage());
+            }
+        }).start();
     }
 
     static String hceApdu(String reqBody) {
