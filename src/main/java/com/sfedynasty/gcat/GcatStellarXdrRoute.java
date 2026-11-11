@@ -5,8 +5,6 @@ import com.google.gson.JsonParser;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.stellar.sdk.*;
-import org.stellar.sdk.responses.AccountResponse;
 import java.io.IOException;
 
 public class GcatStellarXdrRoute implements spark.Route {
@@ -38,8 +36,6 @@ public class GcatStellarXdrRoute implements spark.Route {
             String sequence = acct.get("sequence").getAsString();
             long nextSeq = Long.parseLong(sequence) + 1;
 
-            // Build transaction XDR (unsigned -- requires multisig signing)
-            Asset usdAsset = Asset.createNonNativeAsset("USD", USD_ISSUER);
             String memoText = memo.length() > 28 ? memo.substring(0, 28) : memo;
 
             // Return build instructions since signing requires secret key
