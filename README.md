@@ -21,7 +21,7 @@ Build: `mvn clean package -DskipTests`
 Start: `java -jar target/gcat-jpos-host-1.0.0.jar`
 
 ### Environment Variables
-- GCAT_PAN=4815200000250000
+- GCAT_PAN=9000002500000001
 - GCAT_ACCOUNT=GCATMWLZ7EU7EUWJ3LS6SBHKILWEUS3QBALHGF3XH4IZCOPJHFB5DJYW
 - USD_ISSUER=GCVDS3YYXQVFVVG4HSIBZAHQJAGMQUM6ZTJHUOQGEZHEV4VN2CX5SAT3
 - HORIZON_URL=https://horizon.stellar.org
@@ -29,7 +29,7 @@ Start: `java -jar target/gcat-jpos-host-1.0.0.jar`
 - PORT=8080
 
 ### Card Specs
-- PAN: 4815200000250000
+- PAN: 9000002500000001
 - AID: A000000999534645
 - Spend Limit: $50,000.00
 - Treasury Balance: $250,000.00 USD:GCVDS3
